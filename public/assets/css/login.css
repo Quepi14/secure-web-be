@@ -1,0 +1,18 @@
+
+
+.pw{
+    display: flex;
+    align-items: center;
+}
+.pw input{
+    width: 100%;
+    padding: 2px 1px;
+    outline: 0;
+    font-size: 24px;
+    color: #555;
+}
+
+.pw  img{
+    width: 35px;
+    cursor: pointer;
+}
