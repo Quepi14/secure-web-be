@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
 const { loginAdmin, getAllUsers } = require('../services/adminService');
 const { jwtSecret } = require('../config/index');
-const { addLog, getLogs } = require("../models/logModel")
+const { getLogs } = require("../models/logModel")
 
 const login = async (req, res) => {
   try {
@@ -39,14 +39,22 @@ const verify = (req, res) => {
   res.json({ success: true, message: 'Terverifikasi sebagai admin', admin: req.user });
 };
 
-
-
 const listUsers = async (req, res) => {
   try {
     const users = await getAllUsers();
     res.json({ success: true, users });
   } catch {
     res.status(500).json({ success: false, message: 'Gagal mengambil data user' });
+  }
+};
+
+const logs = async (req, res) => {
+  try {
+    const logData = await getLogs();
+    res.json({ success: true, logs: logData });
+  } catch (err) {
+    console.error('Get logs error:', err);
+    res.status(500).json({ success: false, message: 'Gagal mengambil log aktivitas' });
   }
 };
 
@@ -61,5 +69,6 @@ module.exports = {
   dashboard,
   verify,
   listUsers,
+  logs,
   logout,
 };

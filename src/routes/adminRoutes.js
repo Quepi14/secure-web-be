@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const adminController = require('../controllers/adminController');
-const { verifyToken, authorizeRole } = require('../middlewares/auth');
+const { authorizeRole } = require('../middlewares/auth');
+const { verifyToken } = require('../middlewares/verifyToken');
 
 router.use((req, res, next) => {
   console.log(`ADMIN: ${req.method} ${req.originalUrl}`);

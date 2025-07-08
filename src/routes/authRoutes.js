@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
 const upload = require('../utils/multerConfig');
-const {verifyToken} = require('../middlewares/auth');
+const {verifyToken} = require('../middlewares/verifyToken');
 
 router.use((req, res, next) => {
   console.log(`AUTH: ${req.method} ${req.originalUrl}`);

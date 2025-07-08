@@ -19,9 +19,17 @@ router.get('/health', (req, res) => {
 
 //tes endpoint cookie
 
-router.get('/test-cookie', (req, res) => {
-  res.cookie('token', 'dummy', { httpOnly:  true, secure: false})
-  res.json({ message: 'cookie sent'})
+router.get('/test-token', (req, res) => {
+  const dummyPayload = {
+    id: 999,
+    username: 'dummyuser',
+    role: 'admin',
+}
+
+  const token = jwt.sign(dummyPayload, JWT_SECRET, { expiresIn: '1h' });
+
+  res.json ({ message: 'Beaer token terkirim', token})
 })
+
 
 module.exports = router;
