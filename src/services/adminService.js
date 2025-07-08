@@ -1,6 +1,6 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { jwtSecret } = require('../config');
+const { jwtSecret } = require('../config/index');
 const { getUserByUsernameAndRole, getAllUsers } = require('../models/userModel');
 
 const loginAdmin = async (username, password) => {

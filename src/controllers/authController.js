@@ -1,7 +1,7 @@
-const { jwtSecret } = require('../utils/config');
+const { jwtSecret } = require('../config/index');
 const jwt = require('jsonwebtoken');
 const { registerUser, loginUser, findUserByUsernameOrEmail } = require('../services/authService');
-const db = require('../db.js');
+const db = require('../db');
 
 const register = async (req, res) => {
   const { username, email, password } = req.body;
@@ -31,11 +31,7 @@ const login = async (req, res) => {
 
   try {
     const { user, token } = await loginUser(username, password);
-    res.cookie('token', token, {
-      httpOnly: true,
-      maxAge: 1000 * 60 * 60,
-      secure: false,
-    });
+    
     res.json({ success: true, message: 'Login berhasil', user, token });
   } catch (err) {
     console.error('Login error:', err.message);
@@ -45,23 +41,23 @@ const login = async (req, res) => {
 
 
 const checkLogin = (req, res) => {
-  const token = req.cookies.token;
-  
-  if (!token){
+  const  authHeader = req.headers.authorization;
+  if (!authHeader?.toLowerCase().startsWith('bearer ')) {
     return res.status(401).json({
       loggedIn: false,
-      message : 'Tidak ada token, akses ditolak' 
-    });
-  } 
+      message: 'Token tidak valid'
+    })
+};
+  const token = authHeader.split(' ')[1];
 
   try {
     const decoded = jwt.verify(token, jwtSecret);
     return res.json({ loggedIn: true, user: decoded });
-  } catch {
+  } catch (err) {
     console.error('[JWT VERIFY ERROR]', err.message);
-    return res.status(401).json({ loggedIn: false });
+    return res.status(401).json({ loggedIn: false, message: 'Token tidak valid' });
   }
-};
+}
 
 const checkUser = async (req, res) => {
   const { username, email } = req.body;
@@ -74,8 +70,6 @@ const checkUser = async (req, res) => {
 };
 
 const logout = (req, res) => {
-  res.clearCookie('token');
-  req.session?.destroy?.(() => {});
   res.json({ success: true, message: 'Logout berhasil' });
 };
 

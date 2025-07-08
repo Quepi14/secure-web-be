@@ -12,6 +12,6 @@ router.use(adminAuth);
 
 router.get('/', getAllComments);
 router.put('/:id', updateComment);
-router.delete(':id', deleteComment);
+router.delete('/:id', deleteComment);
 
 module.exports = router;

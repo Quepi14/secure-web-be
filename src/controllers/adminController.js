@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const { loginAdmin, getAllUsers } = require('../services/adminService');
-const { jwtSecret } = require('../config');
+const { jwtSecret } = require('../config/index');
 const { addLog, getLogs } = require("../models/logModel")
 
 const login = async (req, res) => {
@@ -39,10 +39,7 @@ const verify = (req, res) => {
   res.json({ success: true, message: 'Terverifikasi sebagai admin', admin: req.user });
 };
 
-//comment
-async function createComment(params) {
-  
-}
+
 
 const listUsers = async (req, res) => {
   try {
