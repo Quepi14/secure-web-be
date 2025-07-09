@@ -4,7 +4,7 @@ const { createUser, findUserByUsername, findUserByUsernameOrEmail } = require('.
 const { jwtSecret } = require('../config/index');
 
 const registerUser = async (username, email, password) => {
-  console.log('[REGISTER]', { password }); // log input
+  console.log('[REGISTER]', { password });
   const hashedPassword = await bcrypt.hash(password, 10);
   console.log('[HASHED]', { hashedPassword });
   const id = await createUser(username, email, hashedPassword);

@@ -73,14 +73,19 @@ const logout = (req, res) => {
 };
 
 const comment = async (req, res) => {
+  console.log('Comment diterima:');
+  console.log('req.user', req.user);
+  console.log('req.body', req.body);
+  console.log('req.file', req.file);
+  
   const user = req.user;
-  const { comment } = req.body;
+  const commentText = req.body.comment;
   const image = req.file ? req.file.filename : null;
 
-  if (!comment) return res.status(400).json({ success: false, message: 'Komentar kosong' });
+  if (!commentText) return res.status(400).json({ success: false, message: 'Komentar kosong' });
 
   try {
-    await insertComment(user.id, comment, image);
+    await insertComment(user.id, commentText, image);
     res.json({ success: true, message: 'Komentar disimpan' });
   } catch (err) {
     console.error('Insert comment error:', err);

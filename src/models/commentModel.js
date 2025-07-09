@@ -2,11 +2,18 @@ const db = require('../db');
 
 const insertComment = (userId, comment, image) => {
   return new Promise((resolve, reject) => {
+
+    if(!userId || !comment) {
+      return reject (new Error('userId dan comment wajib diisi'))
+    }
     db.run(
       `INSERT INTO comments (user_id, comment, image) VALUES (?, ?, ?)`,
       [userId, comment, image],
       function (err) {
-        if (err) return reject(err);
+        if (err) {
+          console.error('Insert comment error:', err);
+          return reject(err);
+        }
         resolve(this.lastID);
       }
     );
