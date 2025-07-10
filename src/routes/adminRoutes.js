@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const adminController = require('../controllers/adminController');
-const { authorizeRole } = require('../middlewares/auth');
-const { verifyToken } = require('../middlewares/verifyToken');
+const { verifyToken, authorizeRole } = require('../middlewares/verifyToken');
+const { logs } = require('../controllers/adminController');
 
 router.use((req, res, next) => {
   console.log(`ADMIN: ${req.method} ${req.originalUrl}`);
@@ -14,6 +14,7 @@ router.get('/verify', verifyToken, authorizeRole(['admin']), adminController.ver
 router.get('/check', verifyToken, adminController.checkLogin);
 router.get('/dashboard', verifyToken, authorizeRole(['admin']), adminController.dashboard);
 router.get('/users', verifyToken, authorizeRole(['admin']), adminController.listUsers);
+router.get('/logs', verifyToken, authorizeRole(['admin']), logs);
 router.post('/logout', adminController.logout);
 
 module.exports = router;

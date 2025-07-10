@@ -1,5 +1,7 @@
 const db = require('../db');
+const { get } = require('../routes/adminRoutes');
 
+// menginputkan komentar baru
 const insertComment = (userId, comment, image) => {
   return new Promise((resolve, reject) => {
 
@@ -20,6 +22,7 @@ const insertComment = (userId, comment, image) => {
   });
 };
 
+//// Ambil semua komentar
 const getAllComments = () => {
   return new Promise((resolve, reject) => {
     db.all(
@@ -36,11 +39,23 @@ const getAllComments = () => {
   });
 };
 
-const updateCommentById = (id, username, comment, image) => {
+//ambil komentar berdasarkan ID
+const getCommentById = (id) => {
+  return new Promise((resolve, reject) => {
+    db.get(`SELECT * FROM comments WHERE id = ?`, [id], (err, row) => {
+      if (err) return reject(err);
+      resolve(row); 
+    });
+  });
+};
+
+
+// Update komentar berdasarkan ID
+const updateCommentById = (id, comment, image) => {
   return new Promise((resolve, reject) => {
     db.run(
-      `UPDATE comments SET username = ?, comment = ?, image = ? WHERE id = ?`,
-      [username, comment, image, id],
+      `UPDATE comments SET comment = ?, image = ? WHERE id = ?`,
+      [comment, image, id],
       function (err) {
         if (err) return reject(err);
         resolve(this.changes); 
@@ -49,22 +64,22 @@ const updateCommentById = (id, username, comment, image) => {
   });
 };
 
-const deleteComment = (id) => {
+// Hapus komentar berdasarkan ID
+const deleteCommentById = (id) => {
   return new Promise((resolve, reject) => {
-    db.run(
-      `DELETE FROM comments WHERE id = ?`,
-      [id],
-      function (err) {
-        if (err) return reject(err);
-        resolve(this.changes); 
-      }
-    );
+    db.run(`DELETE FROM comments WHERE id = ?`, [id], function (err) {
+      if (err) return reject(err);
+      resolve(this.changes); 
+    });
   });
 };
+
+
 
 module.exports = {
   insertComment,
   getAllComments,
+  getCommentById,
   updateCommentById,
-  deleteComment
+  deleteCommentById
 };

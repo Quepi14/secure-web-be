@@ -6,16 +6,15 @@ const { getLogs } = require("../models/logModel")
 const login = async (req, res) => {
   try {
     const { username, password } = req.body;
-    if (!username || !password) {
-      return res.status(400).json({ success: false, message: 'Username dan password wajib diisi' });
+    if(!username || !password){
+      return res.status(400).json({ success: false, })
     }
 
-    const { admin, token } = await loginAdmin(username, password);
+    const { admin, token } = await loginAdmin(username, password)
 
-    res.cookie('token', token, { httpOnly: true, secure: false, maxAge: 3600000 });
-    res.json({ success: true, message: 'Login berhasil', admin });
-  } catch (err) {
-    res.status(401).json({ success: false, message: err.message });
+    res.json({ succes: true, message: 'Login berhasil', admin, token})
+  }catch (err) {
+    res.status(401).json({ success:false, message:err.message})
   }
 };
 

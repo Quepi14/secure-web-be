@@ -1,7 +1,14 @@
 const { jwtSecret } = require('../config/index');
 const jwt = require('jsonwebtoken');
 const { registerUser, loginUser, findUserByUsernameOrEmail } = require('../services/authService');
-const { insertComment, getAllComments, updateCommentById } = require('../models/commentModel');
+const {
+  insertComment,
+  getAllComments,
+  getCommentById,
+  updateCommentById,
+  deleteCommentById
+} = require('../models/commentModel');
+const { insertLog } = require('../models/logModel');
 
 const register = async (req, res) => {
   const { username, email, password } = req.body;
@@ -13,7 +20,7 @@ const register = async (req, res) => {
     await registerUser(username, email, password);
     res.json({ success: true, message: 'Registrasi berhasil' });
   } catch (err) {
-    console.error('Register error detail:', err); 
+    console.error('Register error detail:', err);
     if (err.message.includes('UNIQUE')) {
       return res.status(409).json({ success: false, message: 'Username atau email sudah digunakan' });
     }
@@ -22,10 +29,7 @@ const register = async (req, res) => {
 };
 
 const login = async (req, res) => {
-  console.log('BODY:', req.body); 
   const { username, password } = req.body;
-
-  console.log('Username:', username, 'Password:', password);
   if (!username || !password) {
     return res.status(400).json({ success: false, message: 'Isi lengkap' });
   }
@@ -73,11 +77,6 @@ const logout = (req, res) => {
 };
 
 const comment = async (req, res) => {
-  console.log('Comment diterima:');
-  console.log('req.user', req.user);
-  console.log('req.body', req.body);
-  console.log('req.file', req.file);
-  
   const user = req.user;
   const commentText = req.body.comment;
   const image = req.file ? req.file.filename : null;
@@ -96,33 +95,73 @@ const comment = async (req, res) => {
 const getComments = async (req, res) => {
   try {
     const rows = await getAllComments();
-    res.json(rows);
+    res.json({ success: true, data: rows });
   } catch (err) {
     console.error('Get comments error:', err);
-    res.status(500).json({ message: 'Gagal ambil komentar' });
+    res.status(500).json({ success: false, message: 'Gagal ambil komentar' });
   }
 };
 
-const updateComment = async (req, res)=> {
-  const  {id} = req.params
-  const { comment} = req.body
-  const image = req.file ? req.file.filename : null
+const updateComment = async (req, res) => {
+  const { id } = req.params;
+  const { comment } = req.body;
+  const image = req.file ? req.file.filename : null;
+  const userId = req.user.id;
 
-  if(!comment){
-    return  res.status(400).json({  success:false, message: 'Komentar kosong' })
+  if (!comment) {
+    return res.status(400).json({ success: false, message: 'Komentar kosong' });
   }
 
-  try{
-    const result = await updateCommentById(id, comment, image)
-    if(result === 0){
-      return res.status(404).json({ succes:false, message: 'Komentar tidak ditemukan' })
+  try {
+    const existingComment = await getCommentById(id);
+    if (!existingComment) {
+      return res.status(404).json({ success: false, message: 'Komentar tidak ditemukan' });
     }
-    res.json({ success : true, message: 'komentar diperbarui' })
-  }catch(err){
-    console.error('Update comment error:', err)
-    res.status(500).json({ success: false, message: 'Gagal memperbarui komentar' })
+
+    if (existingComment.user_id !== userId) {
+      return res.status(403).json({ success: false, message: 'Kamu tidak berhak mengedit komentar ini' });
+    }
+
+    const result = await updateCommentById(id, comment, image);
+    if (result === 0) {
+      return res.status(500).json({ success: false, message: 'Gagal memperbarui komentar' });
+    }
+
+    await insertLog('UPDATE', userId, req.user.username, id, 'User memperbarui komentar');
+    res.json({ success: true, message: 'Komentar diperbarui' });
+  } catch (err) {
+    console.error('Update comment error:', err);
+    res.status(500).json({ success: false, message: 'Gagal memperbarui komentar' });
   }
-}
+};
+
+const deleteComment = async (req, res) => {
+  const { id } = req.params;
+  const userId = req.user.id;
+  const userRole = req.user.role;
+
+  try {
+    const existingComment = await getCommentById(id);
+    if (!existingComment) {
+      return res.status(404).json({ success: false, message: 'Komentar tidak ditemukan' });
+    }
+
+    if (existingComment.user_id !== userId && userRole !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Tidak memiliki akses untuk menghapus komentar ini' });
+    }
+
+    const result = await deleteCommentById(id);
+    if (result === 0) {
+      return res.status(404).json({ success: false, message: 'Komentar tidak ditemukan atau sudah dihapus' });
+    }
+
+    await insertLog('DELETE', userId, req.user.username, id, 'User menghapus komentar');
+    res.json({ success: true, message: 'Komentar dihapus' });
+  } catch (err) {
+    console.error('Delete comment error:', err);
+    res.status(500).json({ success: false, message: 'Gagal menghapus komentar' });
+  }
+};
 
 module.exports = {
   register,
@@ -132,5 +171,6 @@ module.exports = {
   logout,
   comment,
   getComments,
-  updateComment
+  updateComment,
+  deleteComment
 };

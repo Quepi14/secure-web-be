@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const adminAuth = require('../middlewares/adminAuth');
+const {verifyToken, authorizeRole } = require('../middlewares/verifyToken')
 const {
   getAllComments,
   deleteComment
 } = require('../controllers/adminCommentController');
 
-router.use(adminAuth);
+router.use(verifyToken, authorizeRole(['admin']));
 
 router.get('/', getAllComments);
 router.delete('/:id', deleteComment);

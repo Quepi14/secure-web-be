@@ -3,7 +3,7 @@ const db = require('../db');
 const insertLog = (action, userId, username, targetCommentId, description) => {
   return new Promise((resolve, reject) => {
     db.run(
-      `INSERT INTO log (action, user_id, username, target_comment_id, description)
+      `INSERT INTO log (action, user_id, username, target_com, description)
        VALUES (?, ?, ?, ?, ?)`,
       [action, userId, username, targetCommentId, description],
       function (err) {
