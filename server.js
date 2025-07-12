@@ -1,5 +1,4 @@
 require('dotenv').config();
-
 const config = require('./src/config/index'); 
 const app = require('./src/app');
 

@@ -1,29 +1,33 @@
-const db = require('../db');
+const { DataTypes} = require('sequelize')
 
-const insertLog = (action, userId, username, targetCommentId, description) => {
-  return new Promise((resolve, reject) => {
-    db.run(
-      `INSERT INTO log (action, user_id, username, target_com, description)
-       VALUES (?, ?, ?, ?, ?)`,
-      [action, userId, username, targetCommentId, description],
-      function (err) {
-        if (err) return reject(err);
-        resolve(this.lastID);
-      }
-    );
-  });
-};
+module.exports  = (sequelize)=>{
+  const log = sequelize.define('log', {
+    action: {
+      type: DataTypes.STRING,
+      allowNull: false
+    },
+    user_id: {
+      type:DataTypes.INTEGER,
+      allowNull:false
+    },
+    username: {
+      type:DataTypes.STRING,
+      allowNull:false
+    },
+    target_com: {
+      type: DataTypes.INTEGER,
+      allowNull: false
+    },
+    description:{
+      type: DataTypes.TEXT,
+      allowNull: true
+    }
+  },{
+    tableName : 'log',
+    timestamps:true,
+    createdAt:'created_at',
+    updatedAt: false
+  })
 
-const getLogs = () => {
-  return new Promise((resolve, reject) => {
-    db.all(`SELECT * FROM log ORDER BY created_at DESC`, [], (err, rows) => {
-      if (err) return reject(err);
-      resolve(rows);
-    });
-  });
-};
-
-module.exports = {
-  insertLog,
-  getLogs
-};
+  return log
+}

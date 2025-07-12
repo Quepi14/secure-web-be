@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../db'); 
+const db = require('../models/db'); 
 
 
 router.get('/health', (req, res) => {
@@ -18,7 +18,6 @@ router.get('/health', (req, res) => {
 });
 
 //tes endpoint cookie
-
 router.get('/test-token', (req, res) => {
   const dummyPayload = {
     id: 999,

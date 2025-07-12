@@ -14,8 +14,8 @@ router.post('/login', authController.login);
 router.get('/check', verifyToken, authController.checkLogin);
 router.post('/check-user', authController.checkUser);
 router.post('/logout', authController.logout);
-router.post('/comment', verifyToken, upload.single('image'), authController.comment);
-router.get('/comments', verifyToken, authController.getComments);
+router.post('/comment', verifyToken, upload.single('image'), authController.submitComment);
+router.get('/comments', verifyToken, authController.getComment);
 
 
 module.exports = router;

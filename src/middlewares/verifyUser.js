@@ -12,6 +12,7 @@ const verifyUser = (req, res, next) => {
     req.user = decoded;
     next();
   } catch (err) {
+    console.error('[verifyUser Error', err.message);    
     return res.status(401).json({ success: false, message: 'Token tidak valid' });
   }
 };
