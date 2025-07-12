@@ -1,61 +1,72 @@
-const { comment, log, user} = require('../models/db')
+const db = require('../models/db');
 
 // Ambil semua komentar
-const getAllComments = async (req, res) => {
-  try {
-    const comments = await comment.findAll({
-      include: [
-        {
-          model: user,
-          attributes:['username']
-        }
-      ],
-      order:[['created_at', 'DESC']]
-    });
+const getAllComments = (req, res) => {
+  const sql = `
+    SELECT c.id, c.user_id, c.comment, c.image, c.created_at, u.username
+    FROM comments c
+    LEFT JOIN users u ON c.user_id = u.id
+    ORDER BY c.created_at DESC
+  `;
 
-    const result = comments.map(c => ({
+  db.all(sql, [], (err, rows) => {
+    if (err) {
+      console.error('Error getAllComments:', err);
+      return res.status(500).json({ success: false, message: 'Gagal mengambil komentar' });
+    }
+
+    const result = rows.map(c => ({
       id: c.id,
       user_id: c.user_id,
-      username: c.user?.username || 'unknown',
+      username: c.username || 'unknown',
       comment: c.comment,
       image: c.image,
       created_at: c.created_at
     }));
 
     res.json({ success: true, data: result });
-  } catch (err) {
-    console.error('Error getAllCOmment', err);    
-    res.status(500).json({ success: false, message: 'Gagal mengambil komentar' });
-  }
+  });
 };
 
-
-// Hapus komentar
-const deleteComment = async (req, res) => {
+// Hapus komentar oleh admin
+const deleteComment = (req, res) => {
   const { id } = req.params;
-  const admin = req.user
+  const admin = req.user;
 
-  try {
-    const foundComment = await comment.findByPk(id);
-    if (!foundComment) {
+  db.get('SELECT * FROM comments WHERE id = ?', [id], (err, foundComment) => {
+    if (err || !foundComment) {
       return res.status(404).json({ success: false, message: 'Komentar tidak ditemukan' });
     }
 
-    await foundComment.destroy();
+    db.run('DELETE FROM comments WHERE id = ?', [id], function (err2) {
+      if (err2) {
+        console.error('Delete Comment Error:', err2);
+        return res.status(500).json({ success: false, message: 'Gagal menghapus komentar' });
+      }
 
-    await log.create({
-      action: 'DELETE_COMMENT',
-      user_id: admin.id,
-      username: admin.username,
-      target_com: foundComment.id,
-      description: `Admin ${adminName} menghapus komentar ID ${id}`
+      const logSql = `
+        INSERT INTO log (action, user_id, username, target_com, description, created_at)
+        VALUES (?, ?, ?, ?, ?, datetime('now'))
+      `;
+
+      const logParams = [
+        'DELETE_COMMENT',
+        admin.id,
+        admin.username,
+        foundComment.id,
+        `Admin ${admin.username} menghapus komentar ID ${id}`
+      ];
+
+      db.run(logSql, logParams, (err3) => {
+        if (err3) {
+          console.error('Log Error:', err3);
+          return res.status(500).json({ success: false, message: 'Komentar terhapus, tetapi gagal mencatat log' });
+        }
+
+        res.json({ success: true, message: 'Komentar berhasil dihapus' });
+      });
     });
-
-    res.json({ success: true, message: 'Komentar berhasil dihapus' });
-  } catch (err) {
-    console.error('Delete Comment Error:', err);
-    res.status(500).json({ success: false, message: 'Gagal menghapus komentar' });
-  }
+  });
 };
 
 module.exports = {

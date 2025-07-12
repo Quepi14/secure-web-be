@@ -1,31 +1,34 @@
 const jwt = require('jsonwebtoken');
-const { loginAdmin, getAllUsers } = require('../services/adminService');
+const bcrypt = require('bcrypt');
+const db = require('../models/db');
 const { jwtSecret } = require('../config/index');
-const { getLogs } = require("../models/logModel")
 
+// Login admin
 const login = async (req, res) => {
   try {
-    const { username, password} = req.body
-    if(!username || password){
-      return res.status(400).json({ successLfalse, message: 'Lengakpi formnya'})
+    const { username, password } = req.body;
+    if (!username || !password) {
+      return res.status(400).json({ success: false, message: 'Lengkapi formnya' });
     }
 
-    const admin = await user.findone({ where : {username, role:'admin'}})
-    if(!admin || !(await bcrypt.compare(password, admin.password))){
-      return res.status(401).json({ success:false, message:'Username atau password salah'})
-    }
+    db.get('SELECT * FROM users WHERE username = ? AND role = ?', [username, 'admin'], async (err, admin) => {
+      if (err || !admin) return res.status(401).json({ success: false, message: 'Username atau password salah' });
 
-    const token = jwt.sign({ id:admin.id, username:admin.username, role:admin.role }, jwtSecret,{expiresIn: '1d'})
+      const match = await bcrypt.compare(password, admin.password);
+      if (!match) return res.status(401).json({ success: false, message: 'Username atau password salah' });
 
-    res.cookie('token',token, {httpOnly:true, secure:false})
-    res.json({ success:true, message:'Login berhasil', admin: { id: admin.id, username: admin.username, role:admin.role}, token})
-  }catch (err) {
-    console.error(('Login Admin Error:', err));    
-    res.status(401).json({ success:false, message:err.message})
+      const token = jwt.sign({ id: admin.id, username: admin.username, role: admin.role }, jwtSecret, { expiresIn: '1d' });
+
+      res.cookie('token', token, { httpOnly: true, secure: false });
+      res.json({ success: true, message: 'Login berhasil', admin: { id: admin.id, username: admin.username, role: admin.role }, token });
+    });
+  } catch (err) {
+    console.error('Login Admin Error:', err);
+    res.status(500).json({ success: false, message: 'Terjadi kesalahan saat login admin' });
   }
 };
 
-
+// Cek login admin
 const checkLogin = (req, res) => {
   const token = req.cookies.token;
   if (!token) return res.json({ success: false, loggedIn: false });
@@ -38,41 +41,39 @@ const checkLogin = (req, res) => {
   }
 };
 
+// Dashboard
 const dashboard = (req, res) => {
   res.json({ success: true, message: 'Selamat datang di dashboard admin', admin: req.user });
 };
 
+// Verifikasi admin
 const verify = (req, res) => {
   res.json({ success: true, message: 'Terverifikasi sebagai admin', admin: req.user });
 };
 
-
-const listUsers = async (req, res) => {
-  try {
-    const users = await user.findAll({
-      attributes: ['id', 'username', 'email','role', 'created_at'],
-      where: { role: 'user'},
-      order:[['created_at', 'DESC']]
-    });
-    res.json({ success: true, users });
-  } catch {
-    console.error('List Users Error:',err);
-    res.status(500).json({ success: false, message: 'Gagal mengambil data user' });
-  }
+// List semua user biasa (role = user)
+const listUsers = (req, res) => {
+  db.all('SELECT id, username, email, role, created_at FROM users WHERE role = ? ORDER BY created_at DESC', ['user'], (err, rows) => {
+    if (err) {
+      console.error('List Users Error:', err);
+      return res.status(500).json({ success: false, message: 'Gagal mengambil data user' });
+    }
+    res.json({ success: true, users: rows });
+  });
 };
 
-const logs = async (req, res) => {
-  try {
-    const logData = await log.findAll({
-      order: [['created_at', 'DESC']]
-    });
-    res.json({ success: true, logs: logData });
-  } catch (err) {
-    console.error('Get logs error:', err);
-    res.status(500).json({ success: false, message: 'Gagal mengambil log aktivitas' });
-  }
+// Ambil data log aktivitas
+const logs = (req, res) => {
+  db.all('SELECT * FROM log ORDER BY created_at DESC', [], (err, rows) => {
+    if (err) {
+      console.error('Get logs error:', err);
+      return res.status(500).json({ success: false, message: 'Gagal mengambil log aktivitas' });
+    }
+    res.json({ success: true, logs: rows });
+  });
 };
 
+// Logout
 const logout = (req, res) => {
   res.clearCookie('token');
   res.json({ success: true, message: 'Logout berhasil' });

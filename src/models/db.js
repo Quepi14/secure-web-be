@@ -1,27 +1,18 @@
-const { Sequelize, DataTypes } = require('sequelize');
+// File ini mengatur koneksi ke SQLite menggunakan SQL mentah (tanpa Sequelize)
+
+const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 
-const sequelize = new Sequelize({
-  dialect: 'sqlite',
-  storage: path.resolve(__dirname, '..','data.db'),
-  logging: false
+// Path menuju database file
+const dbPath = path.resolve(__dirname, '..', 'data.db');
+
+// Membuka koneksi ke database
+const db = new sqlite3.Database(dbPath, (err) => {
+  if (err) {
+    console.error('Gagal koneksi ke SQLite:', err.message);
+  } else {
+    console.log('Terhubung ke database SQLite di', dbPath);
+  }
 });
 
-// Init model
-const user = require('./userModel')(sequelize, DataTypes);
-const comment = require('./commentModel')(sequelize, DataTypes);
-const log = require('./logModel')(sequelize, DataTypes);
-
-// Relasi antar model
-user.hasMany(comment, { foreignKey: 'user_id', onDelete: 'CASCADE' });
-comment.belongsTo(user, { foreignKey: 'user_id', onDelete: 'CASCADE' });
-
-user.hasMany(log, { foreignKey: 'user_id', onDelete: 'CASCADE' });
-log.belongsTo(user, { foreignKey: 'user_id', onDelete: 'CASCADE' });
-
-module.exports = {
-  sequelize,
-  user,
-  comment,
-  log
-};
+module.exports = db;
