@@ -1,9 +1,9 @@
-// File: controllers/authController.js
-
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const db = require('../models/db');
 const { jwtSecret } = require('../config/index');
+const fs = require('fs');
+const path = require('path');
 
 // REGISTER
 const register = async (req, res) => {
@@ -117,21 +117,32 @@ const updateComment = (req, res) => {
   const user = req.user;
   const { id } = req.params;
   const commentText = req.body.comment;
-  const image = req.file ? req.file.filename : null;
-
+  
   if (!commentText) return res.status(400).json({ success: false, message: 'Komentar kosong' });
-
+  
   db.serialize(() => {
     db.run('BEGIN TRANSACTION');
-
+    
     db.get('SELECT * FROM comments WHERE id = ?', [id], (err, comment) => {
       if (err || !comment) {
         db.run('ROLLBACK');
         return res.status(404).json({ success: false, message: 'Komentar tidak ditemukan' });
       }
-      if (comment.user_id !== user.id) {
+
+      if (comment.user_id !== user.id && user.role !== 'admin') {
         db.run('ROLLBACK');
         return res.status(403).json({ success: false, message: 'Tidak punya akses' });
+      }
+      
+      //jika gambar saat edit diganti, jika tidak tetap
+      const image = req.file ? req.file.filename : comment.image;
+
+      if(req.file && comment.image){
+        const oldImagePath = path.join(__dirname, '../uploads', comment.image)
+        fs.unlink(oldImagePath, (err) => {
+          if(err) console.warn(('gagal hapus gambar lama:', err.message));
+          else console.log('Gambar lama terhapus:', comment.image);
+        })
       }
 
       db.run(
@@ -178,6 +189,14 @@ const deleteComment = (req, res) => {
       if (comment.user_id !== user.id && user.role !== 'admin') {
         db.run('ROLLBACK');
         return res.status(403).json({ success: false, message: 'Tidak punya akses' });
+      }
+
+      if(comment.image){
+        const imagePath = path.join(__dirname, '../uploads', comment.image)
+        fs.unlink(imagePath, (err) => {
+          if(err) console.warn('Gagal menghapus gambar:', err.message);
+          else console.log('Gambar berhasil dihapus', comment.image);
+        })
       }
 
       db.run(

@@ -1,9 +1,7 @@
 const express = require('express');
-const path = require('path'); 
 const router = express.Router();
 
 const authController = require('../controllers/authController');
-const upload = require('../utils/multerConfig');
 const { verifyToken } = require('../middlewares/verifyToken');
 
 // Jika ingin routing comment dipisah
